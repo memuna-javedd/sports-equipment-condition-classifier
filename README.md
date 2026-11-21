@@ -29,9 +29,9 @@ The 80/20 split is random with a fixed seed (42).
 ## Project structure
 ```
 data/        train/ and val/ folders, each with functional/ and damaged/
-notebooks/   model.ipynb (preprocessing, CNN, training, loss curve)
+notebook/   model.ipynb (preprocessing, CNN, training, loss curve)
 models/      baseline_cnn.pth (final epoch), baseline_cnn_best.pth (epoch 6)
-assets/      loss_curve.png
+assests/      loss_curve.png
 ```
 
 ## Setup
@@ -54,7 +54,7 @@ Training: 20 epochs, Adam (lr 1e-3), batch size 16, cross-entropy loss, random h
 ## Results
 **Baseline validation accuracy: 69.6%** (39 of 56 val images).
 
-![Loss curve](assets/loss_curve.png)
+![Loss curve](assests/loss_curve.png)
 
 Training accuracy reaches about 92% while validation accuracy stays near 65-70% and validation
 loss rises after epoch 6, so the model overfits. This is expected with 220 training images.
