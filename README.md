@@ -2,6 +2,9 @@
 
 A binary image classifier that labels a photo of sports equipment as **Functional** or **Damaged**. It is built for Falcons Sports Club, so staff can find damaged equipment from photos and plan maintenance.
 
+Demo video of the /predict endpoint running locally: [Watch the demo](https://github.com/memuna-javedd/sports-equipment-condition-classifier/releases/download/v1.0/Sports.Equipment.Condition.Classifier.-.Swagger.UI.-.Brave.2026-11-25.22-14-53.mp4)
+
+
 The project is built in three tasks:
 
 | Task | What | Status |
