@@ -2,8 +2,9 @@
 
 A binary image classifier that labels a photo of sports equipment as **Functional** or **Damaged**. It is built for Falcons Sports Club, so staff can find damaged equipment from photos and plan maintenance.
 
-Demo video of the /predict endpoint running locally: [Watch the demo](https://github.com/memuna-javedd/sports-equipment-condition-classifier/releases/download/v1.0/Sports.Equipment.Condition.Classifier.-.Swagger.UI.-.Brave.2026-11-25.22-14-53.mp4)
+**Demo video of the `/predict` endpoint running on my laptop:** [Watch the demo](https://github.com/memuna-javedd/sports-equipment-condition-classifier/releases/download/v1.0/Sports.Equipment.Condition.Classifier.-.Swagger.UI.-.Brave.2026-11-25.22-14-53.mp4)
 
+Hugging Face Docker Spaces now need a paid plan, so I did not deploy there. My mentor confirmed that a screen recording of `/predict` running locally, linked here, counts as the deployment for this task.
 
 The project is built in three tasks:
 
@@ -11,7 +12,7 @@ The project is built in three tasks:
 |---|---|---|
 | 1 | Data curation and baseline CNN | Done |
 | 2 | Transfer learning (ResNet18) and robust evaluation | Done |
-| 3 | FastAPI service, model card, Hugging Face Spaces deployment | Not started yet |
+| 3 | FastAPI service, model card, deployment (demo video) | Done |
 
 ## Results at a glance
 
@@ -62,12 +63,14 @@ models/
 assests/                 plots (folder name is spelled this way in the repo)
 reports/
     training_report.md   Task 2 training report and comparison table
+api/                     Task 3: FastAPI service (PyTorch), model weights, model card
+deploy/                  Task 3: FastAPI service (ONNX Runtime), model.onnx, model card, export script
 DECISIONS.md             decision log: why ResNet18 instead of the custom CNN
-requirements.txt
+requirements.txt         dependencies for the notebooks
 README.md
 ```
 
-The ResNet18 weights file (`resnet18_best.pth`, about 45 MB) is not stored in this repo because it is too large for a normal GitHub upload. It will be hosted with the deployment on Hugging Face in Task 3.
+The ResNet18 weights file (`resnet18_best.pth`, about 45 MB) is not stored in this repo because it is too large for a normal GitHub upload. The API in Task 3 serves the baseline CNN instead (see below).
 
 ## Setup
 
@@ -161,6 +164,63 @@ The full reasoning is in [DECISIONS.md](DECISIONS.md). In short: the custom CNN 
 
 The full training report is in [reports/training_report.md](reports/training_report.md).
 
+## Task 3: API and model card
+
+### What was built
+
+A FastAPI service that accepts an image upload and returns the classification as JSON. There are two versions of the same service:
+
+| Folder | Runs the model with | Model file |
+|---|---|---|
+| `api/` | PyTorch | `baseline_cnn_best.pth` |
+| `deploy/` | ONNX Runtime (lighter install, no PyTorch) | `model.onnx`, exported with `deploy/convert_to_onnx.py` |
+
+Both give the same output. Both resize the image to 128x128 and normalize it with mean 0.5 / std 0.5, the same preprocessing as training.
+
+**The service uses the baseline CNN, not ResNet18.** Its validation accuracy is 69.6%, not the 96.4% of ResNet18, so predictions are much less reliable than the Task 2 numbers suggest. The model card reports the baseline's numbers for this reason.
+
+### Endpoints
+
+- `GET /` : simple page to upload an image and see the result
+- `POST /predict` : send an image file in the form field `file`
+- `GET /docs` : interactive Swagger UI
+
+Example request:
+
+```
+curl -X POST -F "file=@photo.jpg" http://127.0.0.1:8000/predict
+```
+
+Example response:
+
+```
+{"label": "damaged", "confidence": 0.82, "needs_human_review": false}
+```
+
+- `label`: `damaged` or `functional`
+- `confidence`: probability of the predicted label
+- `needs_human_review`: `true` when confidence is below 0.7
+
+Errors: `400` if the file is not a valid image, `413` if it is too large (5 MB in `api/`, 4 MB in `deploy/`).
+
+### Run it locally
+
+```
+cd api
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Then open http://127.0.0.1:8000/docs. For the ONNX version, run the same commands inside `deploy/`.
+
+### Deployment
+
+The demo video at the top of this README shows `/predict` running locally in Swagger UI. As agreed with my mentor, this replaces the Hugging Face Spaces deployment because Docker Spaces need a paid plan.
+
+### Model card
+
+[api/MODEL_CARD.md](api/MODEL_CARD.md) covers intended use, out-of-scope use, training data, performance, limitations and ethics. In short: it is a screening aid only, a person must make the final decision, and it must not be used for safety-critical gear such as helmets. The most serious mistake is calling damaged equipment functional.
+
 ## Limitations
 
 - **Small dataset:** 276 images in total. More data, especially more varied damaged photos, would make the results more reliable.
@@ -169,7 +229,4 @@ The full training report is in [reports/training_report.md](reports/training_rep
 - **Image sources:** the damaged images were collected from Google Images by hand and about 10 to 15 are AI-generated. They may include noise or near-duplicates, and AI-generated damage may not look exactly like real wear and tear. The functional images come from a different source than the damaged ones, so the model may partly learn the difference between sources and not only the difference between good and damaged.
 - **Image size:** the saved images are 128x128 and are enlarged to 224x224 for ResNet18, which loses some fine detail such as small cracks.
 - **Balanced classes:** the dataset is 50/50, but real equipment photos will have many more functional items, so precision on real data will likely be lower than reported here.
-
-## Next: Task 3
-
-A FastAPI inference service, a model card, and deployment on Hugging Face Spaces.
+- **Deployed model:** the API serves the baseline CNN (69.6% validation accuracy), not ResNet18, and was only demonstrated locally, not hosted publicly.
