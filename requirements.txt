@@ -1,9 +1,5 @@
-torch
-torchvision
-numpy
-scikit-learn
-matplotlib
-opencv-python
+fastapi
+python-multipart
 pillow
-pillow-avif-plugin
-notebook
+numpy
+onnxruntime
